@@ -81,7 +81,8 @@ The following HTTP APIs are provided by the ESP8266 board:
 - `GET /clear_passwords` : Clear the cracked passwords.
 
 ## Educational Purpose
-
+This project is for educational purposes only. So Kindly use it at your own risk. 
+I am not responsible for any misuse of this project.
 
 ## Contributing
 Contributions are what make the open source community such an amazing place to be learn, inspire, and create. Any contributions you make are **greatly appreciated**. If you want to contribute to this project, you can create a pull request with your changes. Before submitting a pull request, make sure that your changes pass all tests and conform to the project's coding standards.
