@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Handshake</title>
+</head>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        color: #333;
+        background-color: #eee;
+        padding: 20px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin:0;
+    }
+
+    label {
+        display: block;
+        margin-bottom: 5px;
+    }
+
+    input[type="file"] {
+        width: 100%;
+        padding: 10px;
+        box-sizing: border-box;
+        font-size: 16px;
+    }
+
+    input[type="submit"] {
+        background-color: #4CAF50;
+        color: #fff;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+        width: 100%;
+    }
+
+    input[type="submit"]:hover {
+        background-color: #3e8e41;
+    }
+
+    .form {
+        margin: 0 auto;
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 4px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, .2);
+        max-width: 700px;
+        height: max-content;
+    }
+
+    p {
+        margin-bottom: 20px;
+        text-align: center;
+        line-height: 25px;
+    }
+
+    @media (max-width: 768px) {
+        .form {
+            width: 100%;
+        }
+
+        p {
+            font-size: 13px;
+            text-align: justify;
+            line-height: 20px;
+        }
+    }
+</style>
+
+<body>
+
+        <div class="form">
+            <input type="file" id="fileChooser" accept=".cap,.pcap"/>
+            <p>Upload a .cap file to crack the password</p>
+        </div>
+
+    <script type="text/javascript" src="capfile.js"></script>
+    <script>
+
+        function kckFromPmk(srcAddress, dstAddress, anonce, snonce) {
+            let prefix = "5061697277697365206b657920657870616e73696f6e00";
+            if (srcAddress < dstAddress) {
+                prefix += srcAddress;
+                prefix += dstAddress;
+            } else {
+                prefix += dstAddress;
+                prefix += srcAddress;
+            }
+            if (snonce < anonce) {
+                prefix += snonce;
+                prefix += anonce;
+            } else {
+                prefix += anonce;
+                prefix += snonce;
+            }
+            prefix += "00";
+            return prefix;
+        }
+        document.querySelector('#fileChooser').addEventListener('change', function () {
+            if(this.files.length == 0) return;
+            var extenstion = this.files[0].name.split('.').pop();
+            extenstion = extenstion.toLowerCase();
+            if(extenstion != "cap" && extenstion != "pcap") {
+                alert("Please upload a .cap file");
+                this.value = "";
+                return;
+            }
+            var file = this;
+            var reader = new FileReader();
+            reader.onload = function () {
+                try {
+                    var capfile = new CapFile(this.result, false);
+                    var handshake = capfile.extractPmkFields();
+                }
+                catch(err) {
+                    alert(err);
+                    fil.value = "";
+                    return;
+                }                
+                console.log(handshake);
+                delete handshake.bssid;
+                delete handshake.keyDescriptorVersion;
+                delete handshake.keyLength;
+                fetch("/post_handshake", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(handshake),
+                }).then((res) => {
+                    if(res.status == 200) {
+                        alert("Handshake uploaded successfully");
+                        window.location.href = "/get_datas";
+                    }
+                    else {
+                        alert("Handshake upload failed");
+                    }
+                }).catch((err) => {
+                    alert("Handshake upload failed");
+                });
+            }
+            reader.readAsBinaryString(this.files[0]);
+        }, false);
+
+    </script>
+</body>
+
+</html>
