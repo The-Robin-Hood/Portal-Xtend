@@ -10,6 +10,7 @@ extern void writeJsonFile(const char* file_path, DynamicJsonDocument& doc);
 extern void listDir(const char* dirname, uint8_t levels);
 extern void storageInfo();
 extern void BLINK(int times);
+extern String encryption_str(int encryption);
 
 void listDir(const char* dirname, uint8_t levels) {
   File root = LittleFS.open(dirname,"r");
@@ -70,4 +71,23 @@ void BLINK(int times) {
     digitalWrite(BUILTIN_LED, counter % 2);
     delay(500);
   }
+}
+
+String encryption_str(int encryption)
+{
+  switch (encryption)
+    {
+    case ENC_TYPE_WEP:
+      return "WEP";
+    case ENC_TYPE_TKIP:
+      return "WPA";
+    case ENC_TYPE_CCMP:
+      return "WPA2";
+    case ENC_TYPE_NONE:
+      return "OPEN";
+    case ENC_TYPE_AUTO:
+      return "AUTO";
+    default:
+      return "UNKNOWN";
+    }
 }

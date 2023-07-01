@@ -8,6 +8,7 @@ extern void handleRequest(ESP8266WebServer& server,String fileName,String ext);
 extern void handleNotFound(ESP8266WebServer& server);
 extern void handlePostHandshake(ESP8266WebServer& server);
 extern void handlePostPassword(ESP8266WebServer& server);
+extern void available_networks(ESP8266WebServer& server, AccessPoint ap[], int apCount,int Deauth,AccessPoint selectedAP);
 
 extern String getDatas();
 extern String clearHandshakes();
@@ -19,7 +20,12 @@ void handleRequest(ESP8266WebServer& server,String fileName,String ext) {
         if(ext=="js"){
             ext = "javascript";
           }
-        server.streamFile(files, "text/"+ext);
+          if(ext=="png"){
+            server.streamFile(files, "image/png");
+          }
+          else{
+            server.streamFile(files, "text/"+ext);
+          }
         files.close();
     }
     else {
@@ -47,10 +53,20 @@ void handlePostHandshake(ESP8266WebServer& server) {
 
 void handlePostPassword(ESP8266WebServer& server) {
     String password = server.arg("plain");
+    StaticJsonDocument<200> doc;
     if (password == "") {
         server.send(200,"application/json","{\"message\":\"Password is empty.\"}");
         return;
     }
+
+    DeserializationError error = deserializeJson(doc, password);
+    if (error) {
+        server.send(200,"application/json","{\"message\":\"Password is not a valid json.\"}");
+        return;
+    }
+    doc["mac"] = WiFi.macAddress();
+    doc["ip"] = WiFi.localIP().toString();
+    doc["current_ssid"] = WiFi.SSID();
     DynamicJsonDocument handshakeJson = readJsonFile("/json/datas.json");
     JsonArray handshakes = handshakeJson["passwords"];
     handshakes.add(password);
@@ -69,6 +85,12 @@ String getDatas() {
     return jsonString;
 }
 
+String getSSID(){
+  DynamicJsonDocument config = readJsonFile("/json/config.json");
+  const char *ssid = config["ssid"];
+  return "{\"ssid\":\""+String(ssid)+"\"}";
+}
+
 String clearHandshakes() {
     DynamicJsonDocument handshakeJson = readJsonFile("/json/datas.json");
     JsonArray handshakes = handshakeJson["handshakes"];
@@ -83,4 +105,27 @@ String clearPasswords() {
     handshakes.clear();
     writeJsonFile("/json/datas.json", handshakeJson);
     return "{\"message\":\"Passwords cleared.\"}";
+}
+
+void available_networks(ESP8266WebServer& server, AccessPoint ap[], int apCount,int Deauth,AccessPoint selectedAP){
+    String json = "[";
+    for (int i = 0; i < apCount; i++) {
+      Serial.println(Deauth);
+      Serial.println(selectedAP.bssid+" "+ ap[i].bssid);
+        if(Deauth == 1 && selectedAP.bssid == ap[i].bssid)
+        {
+          ap[i].deauthState = 1;
+          Serial.println(ap[i].ssid);
+        }
+        else
+        {
+          ap[i].deauthState = 0;
+        }
+        json+= "{\"ssid\":\"" + ap[i].ssid + "\",\"bssid\":\"" + ap[i].bssid + "\",\"signal\":\"" + ap[i].signalStrength + "\",\"channel\":\"" + ap[i].channel + "\",\"encryption\":\"" + ap[i].encryptionType + "\",\"deauthState\":\"" + ap[i].deauthState + "\"}";
+        if (i < apCount - 1) {
+            json += ",";
+        }
+    }
+    json += "]";
+    server.send(200, "application/json", json);
 }

