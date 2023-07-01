@@ -59,8 +59,6 @@ ssid: The name of the WiFi network you want to create.
 
 (Note: When there is no handshake uploaded by the user then when a victim enters the password and submits it, for the first time they will be alerted that the password is incorrect. This is because to make the victim the site is upgrading, the password is checked against the real password of the WiFi network. After that, the second time the victim will be redirected to the final page which shows fake wifi upgrading process.)
 
-### Interface Demo 
-<video src="./assets/Demo.mp4" controls></video>
 ## Usage
 ### Commands
 The following commands can be entered via the serial monitor (at a baud rate of 115200) to interact with the ESP8266 board:
