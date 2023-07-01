@@ -1,0 +1,10 @@
+[
+  {
+    "ssid": "Harkonen",
+    "bssid": "00:14:6C:7E:40:80",
+    "signal": "-59",
+    "channel": "2",
+    "encryption": "AUTO",
+    "deauthState": "0"
+  }
+]
