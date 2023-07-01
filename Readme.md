@@ -1,15 +1,13 @@
 <div id="top"></div>
 
 <!-- PROJECT LOGO -->
-<div align="center" style="display: flex; align-items: center; justify-content: center;">
-  <a href="https://github.com/The-Robin-Hood/deauth_portal">
-    <img src="/captive_portal/data/png/router.png" alt="Logo">
-  </a>
-  <h1 style="color: #7777AB;"
-  > Portal Xtend </h1>
+<div id="user-content-toc"  align="center">
+  <img src="/captive_portal/data/png/router.png" alt="Logo">
+  <ul>
+    <summary><h1 style="display: inline-block;">Portal Xtend </h1></summary>
+    <p align="center">Version 2.0.0</p>
+  </ul>
 </div>
-<p  align="center" style="font-weight: bold; font-size: 20px;color:#7777AB;">Version 2.0.0</p>
-
 
 <!-- ABOUT THE PROJECT -->
 ## About The Project
@@ -58,6 +56,8 @@ ssid: The name of the WiFi network you want to create.
 5. Go to Networks Section and start deauth attack on the target WiFi network.
 
 (Note: When there is no handshake uploaded by the user then when a victim enters the password and submits it, for the first time they will be alerted that the password is incorrect. This is because to make the victim the site is upgrading, the password is checked against the real password of the WiFi network. After that, the second time the victim will be redirected to the final page which shows fake wifi upgrading process.)
+
+https://github.com/The-Robin-Hood/Portal-Xtend/assets/32297581/01eb4174-72f7-4a1b-8e65-11121c8de5a0
 
 ## Usage
 ### Commands
