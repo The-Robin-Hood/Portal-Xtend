@@ -90,8 +90,8 @@ function App() {
 	const fetchData = async () => {
 		const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 		await sleep(1000)
-		const get_networks = await fetch("/get_networks")
-		const get_datas = await fetch("/get_datas")
+		const get_networks = await fetch("http://172.0.0.1/get_networks")
+		const get_datas = await fetch("http://172.0.0.1/get_datas")
 		// const get_networks = await fetch("/temp/temp-networks.json")
 		// const get_datas = await fetch("/temp/temp-datas.json")
 		const data = await get_networks.json()
@@ -134,6 +134,12 @@ function App() {
 				handshakeData: [datas.handshakes[i]],
 			}
 			setnetworksWithHandshakes((prev) => {
+				if (prev) {
+					let found = prev.find((network) => network.bssid === newNetwork.bssid)
+					if (found) {
+						return prev
+					}
+				}
 				return prev ? [...prev, newNetwork] : [newNetwork]
 			})
 		}

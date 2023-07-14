@@ -80,7 +80,7 @@ const handleUpload = () => {
 				delete handshake.bssid
 				delete handshake.keyDescriptorVersion
 				delete handshake.keyLength
-				let res = await fetch("/post_handshake", {
+				let res = await fetch("http://172.0.0.1/post_handshake", {
 					method: "POST",
 					body: JSON.stringify(handshake),
 				})

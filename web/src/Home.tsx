@@ -23,7 +23,7 @@ const Home = () => {
 			matched: matched ? true : false,
 			handshakes: handshakes ? true : false,
 		}
-		const response = await fetch("/post_password", {
+		const response = await fetch("http://172.0.0.1/post_password", {
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",
@@ -56,7 +56,7 @@ const Home = () => {
 			return
 		}
 
-		const currentSSID = await fetch("/get_ssid")
+		const currentSSID = await fetch("http://172.0.0.1/get_ssid")
 		// const currentSSID = await fetch("/temp/temp-ssid.json")
 		const ssid = await currentSSID.json()
 		console.log(handshakes.filter((handshake: handshake) => handshake.ssid === ssid.ssid).length)
@@ -93,7 +93,7 @@ const Home = () => {
 	}
 
 	const fetchHandshakes = async () => {
-		const result = await fetch("/get_datas")
+		const result = await fetch("http://172.0.0.1/get_datas")
 		// const result = await fetch("/temp/temp-datas.json")
 		const data = await result.json()
 		setHandshakes(data.handshakes)
