@@ -12,7 +12,7 @@ declare var CapFile: {
 
 const deauth = async (state: boolean, apNo: number) => {
 	if (!state) {
-		const request = fetch("/stop_deauth").then((response) => response.json())
+		const request = fetch("http://172.0.0.1/stop_deauth").then((response) => response.json())
 		toast.promise(
 			request,
 			{
@@ -24,7 +24,7 @@ const deauth = async (state: boolean, apNo: number) => {
 		)
 		return false
 	} else {
-		const request = fetch("/deauth?ap=" + apNo)
+		const request = fetch("http://172.0.0.1/deauth?ap=" + apNo)
 			.then((response) => {
 				return response.json()
 			})
@@ -86,6 +86,7 @@ const handleUpload = () => {
 				})
 				if (res.status == 200) {
 					toast.success("Handshake uploaded successfully", notifyStyle)
+					window.location.reload()
 				} else {
 					toast.error("Handshake upload failed", notifyStyle)
 				}
@@ -107,7 +108,7 @@ const handleSSID = () => {
 		return
 	let formData = new FormData()
 	formData.append("ssid", ssid)
-	fetch("/post_ssid", { method: "POST", body: formData })
+	fetch("http://172.0.0.1/post_ssid", { method: "POST", body: formData })
 	let message = toast.loading(
 		"SSID will be changed in a few seconds. Please switch to the new network.",
 		notifyStyle
