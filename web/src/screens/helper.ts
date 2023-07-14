@@ -122,7 +122,7 @@ const handleReset = async (x: "handshake" | "password") => {
 	if (x == "password") {
 		if (!confirm("Warning: \nDo you want to clear all the passwords?")) return
 		toast.promise(
-			fetch("/clear_passwords"),
+			fetch("http://172.0.0.1/clear_passwords"),
 			{
 				loading: "Clearing Passwords...",
 				success: "Passwords Cleared",
@@ -134,7 +134,7 @@ const handleReset = async (x: "handshake" | "password") => {
 	if (x == "handshake") {
 		if (!confirm("Warning: \nDo you want to clear all the handshakes?")) return
 		toast.promise(
-			fetch("/clear_handshakes"),
+			fetch("http://172.0.0.1/clear_handshakes"),
 			{
 				loading: "Clearing Handshakes...",
 				success: "Handshakes Cleared",

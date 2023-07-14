@@ -15,7 +15,7 @@ import { handleHandshakeFile, handleReset, handleSSID, handleUpload, validatePas
 const SetupScreen = ({ networks }: { networks: network[] }) => {
 	const [selectedNetwork, setSelectedNetwork] = useState<network>()
     const [selectedPassword, setSelectedPassword] = useState("")
-    const networksWithHandshake = networks.filter((network) => network.handshake)
+    const [networksWithHandshake, setNetworksWithHandshake] = useState<network[]>(networks.filter((network) => network.handshake))
 	return (
 		<div className="w-[300px] sm:w-[500px] md:w-[600px] p-5 border border-gray-700 rounded-lg items-center justify-center mt-3">
 			<Label htmlFor="ssid-change">SSID</Label>
@@ -96,7 +96,7 @@ const SetupScreen = ({ networks }: { networks: network[] }) => {
 					<Button
 						variant="destructive"
 						className="w-full md:w-2/5"
-						onClick={() => handleReset("handshake")}
+						onClick={() => { handleReset("handshake"); setNetworksWithHandshake([]) }}
 					>
 						Reset Handshakes
 					</Button>
