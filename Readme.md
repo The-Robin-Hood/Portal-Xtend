@@ -31,16 +31,19 @@ To run this project, you will need:
 - ArduinoJson library
 - LittleFS library
 
-## Configuring
-Before running the sketch, you may need to adjust some configuration settings in the data/config.json file:
-```json
-{
-  "ssid": "Free Wifi",
-}
-```
-ssid: The name of the WiFi network you want to create.
-
 ### Installing
+With Browser:
+1. Download the latest release from [here](https://github.com/The-Robin-Hood/Portal-Xtend/releases/tag/v2.0.0)
+2. Connect your ESP8266 board to your computer via USB.
+3. Visit [esp website](https://esp.huhn.me/)
+4. Connect your esp8266 device
+5. Reset your esp8266 device
+6. Upload the binary file to your esp8266 device
+7. Connect to the WiFi network created by the ESP8266 board (the default SSID is "Free Wifi").
+8. Upload the data folder extracted from the captive_portal.zip file.
+9. Happy Hacking!
+
+With Arduino IDE:
 1. Connect your ESP8266 board to your computer via USB.
 2. Open the captive_portal.ino file in Arduino IDE.
 3. Install the required libraries (mentioned above) using the Library Manager in Arduino IDE.
@@ -80,6 +83,7 @@ The following HTTP APIs are provided by the ESP8266 board:
 **These APIs are for serving pages.**
 - `GET /` : Serve the captive portal page.
 - `GET /attack` : Serve the attack page.
+- `GET /reupload` : Serve the file reupload page.
 
 **These APIs are for actions can be performed by the user.**
 - `GET /get_datas` : Get the captured handshakes and cracked passwords in JSON format.
