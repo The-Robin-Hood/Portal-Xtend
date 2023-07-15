@@ -43,17 +43,19 @@ function App() {
 					return toast.error("Victim disconnected")
 				}
 				const data = JSON.parse(event.data)
-				if (data.type === "password") {
-					setLogs((prev) => [...prev, "Victim entered password : " + data.password]);
-					return toast.success("Victim entered password");
+				if (data) {
+					if (data.type === "password") {
+						setLogs((prev) => [...prev, "Victim entered password : " + data.password]);
+						return toast.success("Victim entered password");
+					}
+					if (data.type === "message") {
+						setLogs((prev) => [...prev, data.message]);
+						return
+					}
+					setLogs((prev) => {
+						return [...prev, data];
+					});
 				}
-				if (data.type === "message") {
-					setLogs((prev) => [...prev, data.message]);
-					return
-				}
-				setLogs((prev) => {
-                    return [...prev, data];
-                  });
 			}
 			ws.current.onclose = () => {
 				if (initialConnection.current) {
