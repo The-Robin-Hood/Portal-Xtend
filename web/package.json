@@ -17,6 +17,7 @@
 		"@radix-ui/react-slot": "^1.0.2",
 		"@radix-ui/react-switch": "^1.0.3",
 		"@tanstack/react-table": "^8.9.3",
+		"@types/ua-parser-js": "^0.7.36",
 		"class-variance-authority": "^0.6.0",
 		"clsx": "^1.2.1",
 		"crypto-js": "^4.1.1",
@@ -27,6 +28,7 @@
 		"react-router-dom": "^6.14.0",
 		"tailwind-merge": "^1.13.2",
 		"tailwindcss-animate": "^1.0.6",
+		"ua-parser-js": "^1.0.35",
 		"vite-tsconfig-paths": "^4.2.0"
 	},
 	"devDependencies": {

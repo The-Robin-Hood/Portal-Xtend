@@ -175,9 +175,9 @@ function crackPassword(network: handshake, password: string) {
 	const bytes = CryptoJS.enc.Hex.parse(network.eapolFrameBytes)
 	let newkck = CryptoJS.enc.Hex.parse(kck)
 	const computedMic = CryptoJS.HmacSHA1(bytes, newkck).toString().substring(0, 32)
-	console.log("network", network.ssid)
-	console.log("Expected MIC :", network.mic)
-	console.log("Calculated MIC :", computedMic)
+	// console.log("network", network.ssid)
+	// console.log("Expected MIC :", network.mic)
+	// console.log("Calculated MIC :", computedMic)
 	if (computedMic === network.mic) {
 		return true
 	} else {
