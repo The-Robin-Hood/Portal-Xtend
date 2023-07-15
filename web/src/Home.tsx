@@ -129,7 +129,7 @@ const Home = () => {
   };
 
   const fetchHandshakes = async () => {
-    const result = await fetch("http://172.0.0.1/get_datas");
+    const result = await fetch("/get_datas");
     // const result = await fetch("/temp/temp-datas.json")
     const data = await result.json();
     setHandshakes(data.handshakes);
