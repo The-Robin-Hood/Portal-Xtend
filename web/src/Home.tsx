@@ -62,7 +62,7 @@ const Home = () => {
       password: password,
     };
     ws.current?.send(JSON.stringify(info));
-    const currentSSID = await fetch("http://172.0.0.1/get_ssid");
+    const currentSSID = await fetch("/get_ssid");
     // const currentSSID = await fetch("/temp/temp-ssid.json")
     const ssid = await currentSSID.json();
     if (
