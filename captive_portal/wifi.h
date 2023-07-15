@@ -12,7 +12,7 @@ public:
   int channel;
   String encryptionType;
   signed signalStrength;
-  int deauthState=0;
+  int deauthState = 0;
   // deauth pkt from spacehuhn
   uint8_t deauthPacket[26] = {
       /*  0 - 1  */ 0xC0, 0x00,                         // type, subtype c0: deauth (a0: disassociate)
@@ -47,11 +47,29 @@ void initialServerSetup(IPAddress APIP)
 
 bool setupWifi()
 {
-  DynamicJsonDocument config = readJsonFile("/json/config.json");
-  const char *ssid = config["ssid"];
-  Serial.println("SSID: " + String(ssid));
-  WiFi.softAP(ssid);
-  return true;
+  if (!LittleFS.exists("/json/datas.json"))
+  {
+    DynamicJsonDocument datas(1024);
+    datas.createNestedArray("handshakes");
+    datas.createNestedArray("passwords");
+    writeJsonFile("/json/datas.json", datas);
+  }
+  if (!LittleFS.exists("/json/config.json"))
+  {
+    DynamicJsonDocument config(1024);
+    config["ssid"] = "Free WIFI";
+    writeJsonFile("/json/config.json", config);
+    WiFi.softAP("Free WIFI");
+    return true;
+  }
+  else
+  {
+    DynamicJsonDocument config = readJsonFile("/json/config.json");
+    const char *ssid = config["ssid"];
+    Serial.println("SSID: " + String(ssid));
+    WiFi.softAP(ssid);
+    return true;
+  }
 }
 
 bool changeWifi(String ssid)
@@ -91,8 +109,7 @@ int scan_networks(AccessPoint ap[])
   }
   else
   {
-    Serial.print(numNetworks);
-    Serial.println(" networks found, updating ap list");
+    Serial.println(String(numNetworks) + " network found, updating ap list");
     for (int i = 0; i < numNetworks; i++)
     {
       ap[i].ssid = WiFi.SSID(i);
@@ -100,14 +117,15 @@ int scan_networks(AccessPoint ap[])
       ap[i].channel = WiFi.channel(i);
       ap[i].encryptionType = encryption_str(WiFi.encryptionType(i));
       ap[i].signalStrength = WiFi.RSSI(i);
-      
+
       // set the BSSID of the deauth packet
-      uint8_t mac[6];  
+      uint8_t mac[6];
       const char *myCharPtr = ap[i].bssid.c_str();
-      for (int i = 0; i < 6; i++) {
+      for (int i = 0; i < 6; i++)
+      {
         char byte_str[3];
-        byte_str[0] = myCharPtr[i*3];
-        byte_str[1] = myCharPtr[i*3+1];
+        byte_str[0] = myCharPtr[i * 3];
+        byte_str[1] = myCharPtr[i * 3 + 1];
         byte_str[2] = '\0';
         mac[i] = strtol(byte_str, NULL, 16);
       }

